@@ -2,7 +2,7 @@ import streamlit as st
 import urllib.parse
 
 # --- إعدادات الصفحة ---
-st.set_page_config(page_title="Muscle Code | Expert System", page_icon="💪")
+st.set_page_config(page_title="Muscle Code | Smart Logic", page_icon="🧬")
 
 # --- رقم واتسابك الخاص ---
 MY_PHONE_NUMBER = "201013099096" 
@@ -30,77 +30,72 @@ with col1:
 with col2:
     age = st.number_input("العمر", min_value=10, value=25)
     gender = st.selectbox("الجنس", ["Male", "Female"])
-    is_experienced = st.radio("هل تتمرن منذ أكثر من سنة؟", ["نعم (جسم رياضي)", "لا (مبتدئ)"])
+    is_experienced = st.radio("مستوى الخبرة الرياضية:", ["مبتدئ (كتلة عضلية منخفضة)", "رياضي +1 سنة (كتلة عضلية عالية)"])
 
 goal = st.selectbox("هدفك الحالي", ["تنشيف وحرق دهون", "تضخيم وبناء عضلات", "تحسين اللياقة"])
 
-# --- معالجة البيانات ---
-if st.button("إصدار التقرير والتحليل المقارن ✅"):
+# --- معالجة البيانات بالمعادلات الذكية ---
+if st.button("إصدار التقرير الذكي ✅"):
     if name:
         # 1. حساب الوزن المستهدف (المثالي)
-        if gender == "Male":
-            target_weight = round(50 + 2.3 * ((height / 2.54) - 60))
-        else:
-            target_weight = round(45.5 + 2.3 * ((height / 2.54) - 60))
-        
+        target_weight = round(height - 100) if gender == "Male" else round(height - 105)
         weight_diff = weight - target_weight
-        diff_text = f"تحتاج خسارة {weight_diff} كجم" if weight_diff > 0 else f"تحتاج زيادة {abs(weight_diff)} كجم"
 
-        # 2. حساب السعرات (مع مراعاة الخبرة الرياضية)
-        # إذا كان رياضياً، نضرب في معامل نشاط أعلى قليلاً لأن كتلته العضلية تحرق أكثر
-        activity_factor = 1.65 if is_experienced == "نعم (جسم رياضي)" else 1.4
-        
+        # 2. تطبيق منطق الفرق بين المبتدئ والرياضي
+        # BMR ثابت (Mifflin-St Jeor)
         bmr = (10 * weight) + (6.25 * height) - (5 * age) + (5 if gender == "Male" else -161)
-        tdee = bmr * activity_factor
         
-        if goal == "تنشيف وحرق دهون":
-            target_calories = round(tdee - 500)
-            p_ratio = 2.5 if is_experienced == "نعم (جسم رياضي)" else 2.0
-        elif goal == "تضخيم وبناء عضلات":
-            target_calories = round(tdee + 400)
-            p_ratio = 2.2 if is_experienced == "نعم (جسم رياضي)" else 1.8
+        if is_experienced == "رياضي +1 سنة (كتلة عضلية عالية)":
+            # الرياضي عنده حرق أعلى (Activity Factor أعلى)
+            tdee = bmr * 1.6 
+            # يحتاج بروتين أعلى للحفاظ على العضلات
+            p_ratio = 2.4 if goal == "تنشيف وحرق دهون" else 2.2
+            deficit = 500 if goal == "تنشيف وحرق دهون" else -400 # عجز أكبر لأنه يتحمل
         else:
-            target_calories = round(tdee)
-            p_ratio = 2.0
+            # المبتدئ حرق أبطأ (Activity Factor أقل)
+            tdee = bmr * 1.35 
+            # بروتين معتدل لبناء العضلات لأول مرة
+            p_ratio = 1.8 if goal == "تنشيف وحرق دهون" else 1.6
+            # عجز طفيف للمبتدئ عشان ميفقدش طاقته
+            deficit = 300 if goal == "تنشيف وحرق دهون" else -250
 
+        target_calories = round(tdee - deficit)
+        
         # حساب الماكروز
         protein = round(weight * p_ratio)
         fats = round(weight * 0.8)
         carbs = round((target_calories - (protein * 4) - (fats * 9)) / 4)
 
-        # 3. تجهيز الرسالة للواتساب
-        summary_msg = f"""🚀 *تقرير MUSCLE CODE المتقدم* 🚀
+        # تجهيز الرسالة
+        summary_msg = f"""🧬 *تحليل MUSCLE CODE الذكي* 🧬
 ------------------------------
 👤 *العميل:* {name}
 🏅 *المستوى:* {is_experienced}
 🎯 *الهدف:* {goal}
 ------------------------------
-📏 *مقارنة الوزن:*
-- الوزن الحالي: {weight} كجم
-- الوزن المستهدف: {target_weight} كجم
-⚠️ *الحالة:* {diff_text}
+📊 *مقارنة الوزن:*
+- الحالي: {weight} كجم | المستهدف: {target_weight} كجم
+⚠️ *الفرق:* {weight_diff} كجم
 ------------------------------
-📊 *خطة السعرات والماكروز:*
+🔥 *الخطة الغذائية (مخصصة لمستواك):*
 👈 *السعرات:* {target_calories} سعرة
-- البروتين: {protein} جم
-- الكربوهيدرات: {carbs} جم
-- الدهون الصحية: {fats} جم
+- *البروتين:* {protein} جم (عالي لضمان البناء العضلي)
+- *الكارب:* {carbs} جم
+- *الدهون:* {fats} جم
 ------------------------------
-🍱 *أمثلة للأكل المقترح:*
-✅ صدور دجاج، سمك تونة، بيض، جبن قريش.
-✅ أرز بسمتي، شوفان، بطاطس، كينوا.
-✅ زيت زيتون، مكسرات، زبدة فول سوداني.
+💡 *نصيحة الكابتن:*
+بما أنك {is_experienced}، تم ضبط السعرات لضمان {"أقصى حرق للدهون مع حماية العضلات" if is_experienced.startswith("رياضي") else "تحسين شكل الجسم وبناء عضلات جديدة"}.
 ------------------------------
-*أنا جاهز يا كابتن لبدء التحدي معك!*"""
+*أريد البدء في خطة التحول معك يا كابتن!*"""
 
         encoded_msg = urllib.parse.quote(summary_msg)
         whatsapp_url = f"https://wa.me/{MY_PHONE_NUMBER}?text={encoded_msg}"
         
-        st.success(f"تم تحليل بياناتك بنجاح يا كابتن {name}!")
+        st.success("تم تخصيص المعادلات بناءً على كتلتك العضلية المتوقعة!")
         st.markdown(f'''
             <a href="{whatsapp_url}" target="_blank">
                 <button style="background-color: #25D366; color: white; padding: 18px; border-radius: 12px; border: none; width: 100%; font-weight: bold; font-size: 20px; cursor: pointer;">
-                    استلم مقارنة الوزن وتفاصيل النظام (WhatsApp) ✅
+                    استلم التقرير المخصص لمستواك (WhatsApp) ✅
                 </button>
             </a>
         ''', unsafe_allow_html=True)
@@ -108,4 +103,4 @@ if st.button("إصدار التقرير والتحليل المقارن ✅"):
         st.error("يرجى إدخال الاسم")
 
 st.write("---")
-st.caption("Muscle Code System v6.0 - Advanced Body Analysis")
+st.caption("Muscle Code System v7.0 - Body Composition Logic")
