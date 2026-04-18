@@ -6,7 +6,7 @@ st.set_page_config(page_title="Muscle Code | Direct Connect", page_icon="💬")
 
 # --- رقم واتسابك الخاص (اكتبه هنا بدقة) ---
 # ملاحظة: اكتب الرقم بكود الدولة بدون أصفار أو علامة + (مثال لمصر: 2010xxxxxxxx)
-MY_PHONE_NUMBER = "201012345678" 
+MY_PHONE_NUMBER = "201013099096" 
 
 st.markdown("""
     <style>
