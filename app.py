@@ -2,29 +2,32 @@ import streamlit as st
 import urllib.parse
 
 # --- إعدادات الصفحة ---
-st.set_page_config(page_title="Muscle Code | Advanced Report", page_icon="🏋️‍♂️")
+st.set_page_config(page_title="Muscle Code | Direct System", page_icon="💪")
 
-# --- رقم واتسابك (عدله لرقمك الحقيقي) ---
+# --- رقم واتسابك (تأكد من كتابته بكود الدولة بدون أصفار: مثال 2010xxxxxxxx) ---
 MY_PHONE_NUMBER = "201013099096" 
-
 st.markdown("""
     <style>
     .stApp { background-color: #000; color: white; }
     h1 { color: #39FF14; text-align: center; text-shadow: 2px 2px 10px #39FF14; }
     .stButton>button { 
         background-color: #39FF14 !important; color: black !important; 
-        font-weight: bold !important; width: 100%; border-radius: 10px;
+        font-weight: bold !important; width: 100%; border-radius: 12px;
+        height: 3.5em; font-size: 18px;
     }
-    .report-card {
-        background-color: #111; border: 1px solid #333; padding: 15px; border-radius: 10px;
+    .instruction-box {
+        background-color: #111; padding: 20px; border-radius: 10px;
+        border: 1px solid #333; text-align: center; margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("MUSCLE CODE ⚡")
-st.write("احصل على نظامك الغذائي والمكملات الموصى بها")
 
-# --- المدخلات ---
+with st.container():
+    st.markdown('<div class="instruction-box">أدخل بياناتك بالأسفل للحصول على تقريرك الصحي الشامل وجدول المكملات عبر الواتساب مباشرة</div>', unsafe_allow_html=True)
+
+# --- مدخلات البيانات ---
 col1, col2 = st.columns(2)
 with col1:
     name = st.text_input("الأسم الكامل")
@@ -35,11 +38,10 @@ with col2:
     gender = st.selectbox("الجنس", ["Male", "Female"])
     goal = st.selectbox("هدفك الحالي", ["تنشيف وحرق دهون", "تضخيم وبناء عضلات", "تحسين اللياقة"])
 
-# --- العمليات الحسابية ---
-if st.button("إصدار التقرير الشامل"):
+# --- معالجة البيانات وإرسالها ---
+if st.button("إرسال التقرير إلى الواتساب الخاص بي ✅"):
     if name:
-        # 1. حساب الوزن المثالي (معادلة Devine)
-        height_m = height / 100
+        # 1. حساب الوزن المثالي
         if gender == "Male":
             target_weight = round(50 + 2.3 * ((height / 2.54) - 60))
         else:
@@ -47,7 +49,7 @@ if st.button("إصدار التقرير الشامل"):
             
         # 2. حساب السعرات (Mifflin-St Jeor)
         bmr = (10 * weight) + (6.25 * height) - (5 * age) + (5 if gender == "Male" else -161)
-        tdee = bmr * 1.55 # نشاط متوسط
+        tdee = bmr * 1.55 
         
         if goal == "تنشيف وحرق دهون":
             target_calories = round(tdee - 500)
@@ -59,58 +61,54 @@ if st.button("إصدار التقرير الشامل"):
             target_calories = round(tdee)
             system_name = "Balanced Maintenance"
 
-        # 3. حساب الماكروز (Macros)
-        protein = round(weight * 2.2) # 2.2 جرام لكل كيلو
-        fats = round((target_calories * 0.25) / 9) # 25% من السعرات دهون صحية
+        # 3. حساب الماكروز
+        protein = round(weight * 2.2)
+        fats = round((target_calories * 0.25) / 9)
         carbs = round((target_calories - (protein * 4) - (fats * 9)) / 4)
         
         # 4. المكملات الموصى بها
-        supplements = "Whey Protein, Creatine Monohydrate, Multi-Vitamin"
+        supplements = "Whey Protein, Creatine, Multi-Vitamin"
         if goal == "تنشيف وحرق دهون":
-            supplements += ", Omega-3, Caffeine"
+            supplements += ", Omega-3, L-Carnitine"
 
-        # تجهيز نص الرسالة للواتساب
-        summary_msg = f"""أهلاً كابتن، بياناتي من موقعك:
-- الاسم: {name}
+        # 5. تجهيز الرسالة "الاحترافية" اللي هتوصلك
+        summary_msg = f"""🔥 تقرير MUSCLE CODE الجديد 🔥
+------------------------------
+👤 العميل: {name}
+🎯 الهدف: {goal}
+------------------------------
+📊 التحليل الرقمي:
+- الوزن الحالي: {weight} كجم
 - الوزن المستهدف: {target_weight} كجم
-- النظام: {system_name}
-- السعرات: {target_calories} سعرة
+- السعرات المطلوبة: {target_calories} سعرة
+- النظام المقترح: {system_name}
+------------------------------
+🥩 الماكروز اليومية:
 - البروتين: {protein} جم
 - الكارب: {carbs} جم
 - الدهون الصحية: {fats} جم
-- المكملات: {supplements}
-اريد البدء معك!"""
+------------------------------
+💊 المكملات الموصى بها:
+{supplements}
+------------------------------
+رقم الواتساب للعميل تم استلامه أوتوماتيكياً."""
 
-        # عرض النتائج في الموقع
-        st.success("تم تحليل بياناتك بنجاح!")
-        st.markdown(f"""
-        <div class="report-card">
-        <h3>📋 تقريرك الصحي:</h3>
-        <p><b>الوزن المثالي المستهدف:</b> {target_weight} كجم</p>
-        <p><b>النظام الموصى به:</b> {system_name}</p>
-        <p><b>السعرات اليومية:</b> {target_calories} Kcal</p>
-        <hr>
-        <h4>توزيع الماكروز:</h4>
-        <p>🍗 بروتين: {protein} جم</p>
-        <p>🍚 كاربوهيدرات: {carbs} جم</p>
-        <p>🥑 دهون صحية: {fats} جم</p>
-        <hr>
-        <h4>💊 المكملات الموصى بها:</h4>
-        <p>{supplements}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # زر الواتساب
+        # تحويل الرسالة لرابط
         encoded_msg = urllib.parse.quote(summary_msg)
         whatsapp_url = f"https://wa.me/{MY_PHONE_NUMBER}?text={encoded_msg}"
         
-        st.write("---")
+        # رسالة نجاح للمستخدم مع زر التحويل
+        st.success("تم تحليل بياناتك! اضغط على الزر بالأسفل لفتح الواتساب واستلام التقرير كاملاً.")
+        
         st.markdown(f'''
             <a href="{whatsapp_url}" target="_blank">
-                <button style="background-color: #25D366; color: white; padding: 15px; border-radius: 10px; border: none; width: 100%; font-weight: bold; cursor: pointer;">
-                    استلم التقرير PDF وتواصل مع الكابتن ✅
+                <button style="background-color: #25D366; color: white; padding: 18px; border-radius: 12px; border: none; width: 100%; font-weight: bold; font-size: 20px; cursor: pointer;">
+                    فتح محادثة واتساب واستلام التقرير 📩
                 </button>
             </a>
         ''', unsafe_allow_html=True)
     else:
-        st.error("الرجاء إدخال اسمك")
+        st.error("يرجى إدخال اسمك أولاً.")
+
+st.write("---")
+st.caption("Muscle Code System v4.0 - Direct Private Report")
