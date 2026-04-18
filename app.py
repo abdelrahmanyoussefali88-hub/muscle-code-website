@@ -1,10 +1,12 @@
 import streamlit as st
 from datetime import datetime
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 
 # --- إعدادات الصفحة ---
 st.set_page_config(page_title="Muscle Code | Business Edition", page_icon="💪", layout="centered")
 
-# --- تصميم النيون والواجهة ---
+# --- تصميم النيون ---
 st.markdown("""
     <style>
     .stApp { background-color: #000; color: white; }
@@ -14,15 +16,14 @@ st.markdown("""
         font-weight: bold !important; width: 100%; border-radius: 10px;
     }
     .stTextInput>div>div>input { background-color: #222 !important; color: white !important; }
-    .report-box { 
-        background-color: #111; border: 1px solid #39FF14; padding: 20px; 
-        border-radius: 10px; font-family: 'Courier New', monospace;
-    }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("MUSCLE CODE ⚡")
 st.write("---")
+
+# ربط الشيت (إعداد الاتصال)
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 # --- مدخلات البيانات ---
 col1, col2 = st.columns(2)
@@ -34,45 +35,39 @@ with col1:
 with col2:
     age = st.number_input("العمر", min_value=10, value=25)
     gender = st.selectbox("الجنس", ["Male", "Female"])
-    whatsapp = st.text_input("رقم الواتساب (لإرسال التقرير والخصومات)")
+    whatsapp = st.text_input("رقم الواتساب")
 
 # --- زر التنفيذ ---
 if st.button("إصدار التقرير الصحي مجاناً"):
     if not name or not whatsapp:
-        st.error("يرجى إدخال الاسم ورقم الواتساب لاستلام تقريرك!")
+        st.error("يرجى إدخال الاسم ورقم الواتساب!")
     else:
-        # الحسابات
+        # 1. حساب البيانات (نفس حساباتك)
         height_m = height / 100
         bmi = weight / (height_m ** 2)
         gender_factor = 1 if gender == "Male" else 0
         body_fat = (1.20 * bmi) + (0.23 * age) - (10.8 * gender_factor) - 5.4
         bmr = (10 * weight) + (6.25 * height) - (5 * age) + (5 if gender_factor else -161)
-        tdee = bmr * 1.55
-        calories = round(tdee - 500)
-        
-        # عرض التقرير
-        st.success(f"أهلاً كابتن {name}! تم تجهيز تقريرك بنجاح ✅")
-        
-        report = f"""
-        [ تحليل الجسم ]
-        - مؤشر كتلة الجسم: {bmi:.1f}
-        - نسبة الدهون التقريبية: {max(0, body_fat):.1f}%
-        
-        [ الخطة الغذائية ]
-        - السعرات المستهدفة: {calories} سعرة
-        - البروتين اليومي: {round(weight * 2)} جرام
-        
-        [ ملاحظة الكابتن ]
-        تم حفظ بياناتك.. سنتواصل معك عبر واتساب ({whatsapp}) 
-        لإرسال جدول تمارين مجاني مخصص لك!
-        """
-        
-        st.markdown("### 📋 التقرير المبدئي")
-        st.code(report, language="text")
-        
-        # هنا يمكنك إضافة تنبيه لنفسك (برمجياً) أو ببساطة جمع البيانات
-        st.balloons()
-        st.info("سيتم التواصل معك خلال 24 ساعة لتقديم استشارة مجانية.")
+        calories = round((bmr * 1.55) - 500)
 
-st.write("---")
-st.caption("Powered by Muscle Code Business System")
+        # 2. حفظ البيانات في جوجل شيت أوتوماتيك
+        new_data = pd.DataFrame([{
+            "Name": name,
+            "Weight": weight,
+            "WhatsApp": whatsapp,
+            "Date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }])
+        
+        # قراءة البيانات القديمة وإضافة الجديدة
+        try:
+            existing_data = conn.read(worksheet="Sheet1")
+            updated_df = pd.concat([existing_data, new_data], ignore_index=True)
+            conn.update(worksheet="Sheet1", data=updated_df)
+        except:
+            # لو الشيت فاضي خالص
+            conn.update(worksheet="Sheet1", data=new_data)
+
+        # 3. عرض التقرير للعميل
+        st.success(f"تم تجهيز تقريرك يا كابتن {name}! تم حفظ بياناتك وسنتواصل معك ✅")
+        st.code(f"السعرات: {calories} kcal\nنسبة الدهون: {max(0, body_fat):.1f}%", language="text")
+        st.balloons()
